@@ -28,7 +28,7 @@ jobs:
       run: |
         sudo mkdir -p /var/www/storage
         sudo chown www-data:www-data /var/www/storage
-        sudo chmod 750 /var/www/storage
+        sudo chmod 755 /var/www/storage
 
     - name: Copy CloudVista script to CGI directory
       run: |
