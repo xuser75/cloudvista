@@ -1,38 +1,54 @@
-# CloudVista Documentation
+# CloudVista
 
-## Introduction
-CloudVista is a powerful cloud management platform that simplifies the way organizations manage their cloud infrastructure. This documentation provides an overview of the features, installation, configuration, and usage of CloudVista.
+CloudVista is a simple cloud file storage site that allows users to register, login, upload, download, and delete files. 
 
 ## Features
-- **User-Friendly Interface**: Easy navigation and management of cloud resources.
-- **Multi-Cloud Support**: Manage resources across multiple cloud providers.
-- **Resource Management**: Monitor and optimize cloud resource utilization.
-- **Security Features**: Integrated security protocols to safeguard data.
+- Files are **not encrypted** - they are stored as-is in the storage directory
+- User directories are created using MD5 hashes of usernames
+- Password hashes are created using MD5
+- Files are stored in a designated STORAGE_ROOT directory (default: `/var/www/storage`)
+- 1GB file size limit per upload
+- Cookie-based session management (30-day expiration)
+- Users can change their password
+- Users can delete their account (which removes all files)
+
+## Setup & Configuration
+
+Configuration is done by editing the variables in the `cloudvista.cgi` script:
+
+```perl
+my $STORAGE_ROOT = "/var/www/storage"; # must be writable by httpd user
+my $MAX_UPLOAD   = 1073741824;         # 1 GB
+my $SCRIPT_NAME  = $ENV{SCRIPT_NAME} || "/cgi-bin/cloudvista.cgi";
+my $COOKIE_DAYS  = 30;
+```
+
+## Requirements
+
+- Perl 5.8+ with core modules
+- A web server with CGI support (Apache, Nginx with CGI wrapper, etc.)
+- The storage directory must be writable by the web server user
 
 ## Installation
-To install CloudVista, follow these steps:
-1. Download the latest version from the official website.
-2. Unzip the downloaded file and navigate to the folder.
-3. Run the installation script using the command `install.sh`.
-4. Follow the on-screen instructions to complete the installation.
 
-## Configuration
-After installation, configure CloudVista by editing the `config.yml` file:
-- Set your cloud provider credentials.
-- Configure the default region for resource deployment.
+1. Place `cloudvista.cgi` in your web server's CGI directory
+2. Make it executable: `chmod 755 cloudvista.cgi`
+3. Create and configure the storage directory:
+   ```bash
+   mkdir -p /var/www/storage
+   chown www-data:www-data /var/www/storage  # adjust user for your web server
+   chmod 750 /var/www/storage
+   ```
+4. Update `$STORAGE_ROOT` in the script if needed
+5. Access via your web server's CGI endpoint
 
 ## Usage
-- **Starting CloudVista**: Use the command `start_cloudvista` to launch the application.
-- **Viewing Resources**: Use the dashboard to view all your resources.
-- **Managing Resources**: Utilize the built-in tools to create, modify, or delete resources.
 
-## Support
-For further assistance, please visit our [Support Page](http://cloudvista.support).
-
-## Conclusion
-CloudVista aims to provide seamless cloud management capabilities, ensuring organizations can operate efficiently in today's cloud-centric world.
-
----
-**Last Updated:** 2026-04-07
-
-**Author:** xuser75
+Users can:
+- Register a new account with username and password
+- Login to access their file storage
+- Upload files (up to 1GB each)
+- Download their files
+- Delete individual files
+- Change their password
+- Delete their account and all files
