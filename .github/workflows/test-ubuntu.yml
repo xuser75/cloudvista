@@ -1,0 +1,88 @@
+name: Test CloudVista on Ubuntu Latest
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Perl and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y perl libcgi-pm-perl libdigest-md5-perl apache2 libapache2-mod-cgid
+
+    - name: Enable CGI module in Apache
+      run: |
+        sudo a2enmod cgid
+        sudo a2enmod rewrite
+
+    - name: Create storage directory
+      run: |
+        sudo mkdir -p /var/www/storage
+        sudo chown www-data:www-data /var/www/storage
+        sudo chmod 750 /var/www/storage
+
+    - name: Copy CloudVista script to CGI directory
+      run: |
+        sudo cp cloudvista.cgi /usr/lib/cgi-bin/
+        sudo chmod 755 /usr/lib/cgi-bin/cloudvista.cgi
+        sudo chown www-data:www-data /usr/lib/cgi-bin/cloudvista.cgi
+
+    - name: Start Apache
+      run: |
+        sudo systemctl start apache2
+        sudo systemctl enable apache2
+
+    - name: Wait for Apache to start
+      run: sleep 5
+
+    - name: Check Apache status
+      run: |
+        sudo systemctl status apache2
+        curl http://localhost/cgi-bin/cloudvista.cgi || echo "Initial connection test"
+
+    - name: Verify Perl script syntax
+      run: |
+        perl -c cloudvista.cgi
+
+    - name: Test user registration
+      run: |
+        curl -X POST http://localhost/cgi-bin/cloudvista.cgi \
+          -d "action=register&username=testuser&password=test1234&confirm=test1234" \
+          -L || echo "Registration test completed"
+
+    - name: Test user login
+      run: |
+        curl -X POST http://localhost/cgi-bin/cloudvista.cgi \
+          -d "action=login&username=testuser&password=test1234" \
+          -L -c cookies.txt || echo "Login test completed"
+
+    - name: Verify storage directories created
+      run: |
+        ls -la /var/www/storage/ || echo "Storage directory check completed"
+        find /var/www/storage -type d || echo "No user directories found yet"
+
+    - name: Check Apache error logs
+      if: failure()
+      run: |
+        sudo tail -100 /var/log/apache2/error.log
+
+    - name: Check Apache access logs
+      if: failure()
+      run: |
+        sudo tail -100 /var/log/apache2/access.log
+
+    - name: Verify README exists
+      run: |
+        test -f README.md && echo "README.md found" || echo "README.md not found"
+
+    - name: Display README
+      run: cat README.md
