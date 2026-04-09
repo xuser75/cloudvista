@@ -112,6 +112,7 @@ sub safe_name {
     my $n = basename(shift || '');
     $n =~ s/[^\w.\-]/_/g;
     $n =~ s/^\./dot_/;
+    $n =~ s!/!_!g;
     return length($n) ? $n : 'file';
 }
 
